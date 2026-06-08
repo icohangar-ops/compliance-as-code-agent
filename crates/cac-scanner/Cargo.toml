@@ -1,0 +1,18 @@
+[package]
+name = "cac-scanner"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Repository scanner that evaluates compliance policies"
+
+[dependencies]
+cac-core = { workspace = true }
+chrono = { workspace = true }
+glob = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+walkdir = { workspace = true }

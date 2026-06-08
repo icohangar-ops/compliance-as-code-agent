@@ -1,0 +1,28 @@
+id: gdpr-data-tagging
+name: GDPR Data Classification
+framework: GDPR
+description: Personal data fields must be annotated with GDPR classification tags.
+rules:
+  - id: gdpr-email-field
+    kind: required_annotation
+    description: Email field missing GDPR data-class annotation
+    severity: high
+    pattern: '(?i)(email|e_mail|user_email)\s*[:=]'
+    annotation: '@gdpr'
+    message: Annotate personal email fields with @gdpr and document lawful basis.
+
+  - id: gdpr-phone-field
+    kind: required_annotation
+    description: Phone number field missing GDPR annotation
+    severity: high
+    pattern: '(?i)(phone|mobile|telephone)\s*[:=]'
+    annotation: '@gdpr'
+    message: Annotate phone number fields with @gdpr personal-data classification.
+
+  - id: gdpr-ssn-field
+    kind: required_annotation
+    description: Government ID / SSN field missing GDPR annotation
+    severity: critical
+    pattern: '(?i)(ssn|social_security|national_id|passport)'
+    annotation: '@gdpr'
+    message: Highly sensitive identifiers require @gdpr annotation and DPIA review.

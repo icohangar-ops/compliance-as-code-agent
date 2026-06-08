@@ -1,0 +1,24 @@
+[package]
+name = "cac-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "CLI for Compliance-as-Code: scan, fix, validate"
+readme = "../../README.md"
+
+[[bin]]
+name = "cac"
+path = "src/main.rs"
+
+[dependencies]
+cac-core = { workspace = true }
+cac-scanner = { workspace = true }
+cac-fixer = { workspace = true }
+cac-validator = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

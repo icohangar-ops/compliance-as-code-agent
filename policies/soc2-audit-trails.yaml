@@ -1,0 +1,31 @@
+id: soc2-audit-trails
+name: SOC2 Audit Trail Requirements
+framework: SOC2
+description: Sensitive operations must emit immutable audit log entries.
+rules:
+  - id: soc2-auth-handler
+    kind: required_call
+    description: Authentication handler missing audit_log call
+    severity: high
+    pattern: '(?i)(fn\s+login|fn\s+authenticate|def\s+login|async\s+fn\s+sign_in)'
+    required_call: audit_log
+    file_glob: '**/*.{rs,py,ts,js,go}'
+    message: SOC2 CC6.1 — authentication events must be written to the audit trail.
+
+  - id: soc2-delete-handler
+    kind: required_call
+    description: Data deletion handler missing audit_log call
+    severity: critical
+    pattern: '(?i)(fn\s+delete_user|fn\s+purge|def\s+delete|remove_pii)'
+    required_call: audit_log
+    file_glob: '**/*.{rs,py,ts,js,go}'
+    message: SOC2 CC6.7 — data deletion must be logged for compliance evidence.
+
+  - id: soc2-payment-handler
+    kind: required_call
+    description: Payment processing missing audit trail
+    severity: critical
+    pattern: '(?i)(fn\s+charge|fn\s+process_payment|stripe\.charges)'
+    required_call: audit_log
+    file_glob: '**/*.{rs,py,ts,js,go}'
+    message: Financial operations require immutable audit logging per SOC2 CC8.1.

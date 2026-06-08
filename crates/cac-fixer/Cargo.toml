@@ -1,0 +1,15 @@
+[package]
+name = "cac-fixer"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Auto-fix agent for compliance violations"
+
+[dependencies]
+cac-core = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }

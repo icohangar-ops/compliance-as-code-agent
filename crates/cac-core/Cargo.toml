@@ -1,0 +1,19 @@
+[package]
+name = "cac-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Policy engine, violation model, and signed audit ledger for Compliance-as-Code"
+
+[dependencies]
+chrono = { workspace = true }
+hex = { workspace = true }
+hmac = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }

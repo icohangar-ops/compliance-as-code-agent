@@ -1,0 +1,8 @@
+/target/
+**/*.rs.bk
+.cac/
+*.swp
+*.swo
+.DS_Store
+.env
+.env.local

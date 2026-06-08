@@ -1,0 +1,29 @@
+name: Compliance-as-Code
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build CAC CLI
+        run: cargo build --release -p cac-cli
+
+      - name: Scan repository
+        run: ./target/release/cac scan --format json
+        env:
+          CAC_LEDGER_SIGNING_KEY: ci-signing-key-change-me
+
+      - name: Validate example violations are detected
+        run: |
+          ./target/release/cac scan --root examples/violations --format json > /tmp/report.json
+          COUNT=$(python3 -c "import json; print(json.load(open('/tmp/report.json'))['violations'].__len__())")
+          test "$COUNT" -gt 0

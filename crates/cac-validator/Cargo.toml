@@ -1,0 +1,16 @@
+[package]
+name = "cac-validator"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Validation agent that re-scans and adversarially checks fixes"
+
+[dependencies]
+cac-core = { workspace = true }
+cac-scanner = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
