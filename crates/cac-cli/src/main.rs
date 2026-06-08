@@ -6,6 +6,7 @@ use cac_core::{
 use cac_fixer::Fixer;
 use cac_scanner::{ScanConfig, Scanner};
 use cac_validator::Validator;
+use cac_webhook::{run_server, WebhookConfig};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
@@ -65,6 +66,18 @@ enum Commands {
     },
     /// Show signed audit trail
     Audit,
+    /// Start PR webhook server (GitHub + Codeberg/Gitea)
+    Serve {
+        /// Bind address (overrides CAC_BIND_ADDR)
+        #[arg(long, env = "CAC_BIND_ADDR", default_value = "0.0.0.0:8080")]
+        bind: String,
+        /// Webhook HMAC secret (overrides CAC_WEBHOOK_SECRET)
+        #[arg(long, env = "CAC_WEBHOOK_SECRET")]
+        webhook_secret: Option<String>,
+        /// Enable auto-fix PR creation on violations
+        #[arg(long, env = "CAC_AUTO_FIX_PR")]
+        auto_fix_pr: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -230,6 +243,39 @@ fn main() -> Result<()> {
                     );
                 }
             }
+        }
+        Commands::Serve {
+            bind,
+            webhook_secret,
+            auto_fix_pr,
+        } => {
+            tracing_subscriber::fmt()
+                .with_env_filter(
+                    tracing_subscriber::EnvFilter::try_from_default_env()
+                        .unwrap_or_else(|_| "info".into()),
+                )
+                .init();
+
+            let mut config = WebhookConfig::from_env(cli.globals.policies.clone());
+            config.bind_addr = bind;
+            config.policies_dir = cli.globals.policies;
+            config.signing_key = cli.globals.signing_key;
+            if let Some(secret) = webhook_secret {
+                config.webhook_secret = secret;
+            }
+            if auto_fix_pr {
+                config.auto_fix_pr = true;
+            }
+
+            println!("CAC webhook server starting on {}", config.bind_addr);
+            println!("  POST /webhook         — auto-detect GitHub or Gitea");
+            println!("  POST /webhook/github  — GitHub pull_request events");
+            println!("  POST /webhook/gitea   — Codeberg/Gitea pull_request events");
+            println!("  GET  /health          — liveness probe");
+
+            tokio::runtime::Runtime::new()?
+                .block_on(run_server(config))
+                .map_err(|err| anyhow::anyhow!("webhook server failed: {err}"))?;
         }
     }
 

@@ -36,6 +36,7 @@ cac fix [--dry-run]   # Fixer agent
 cac validate          # Validator agent
 cac run [--dry-run]   # Full detect → fix → validate pipeline
 cac audit             # Show signed audit trail
+cac serve             # PR webhook server (GitHub + Codeberg)
 ```
 
 ### Options
@@ -64,6 +65,24 @@ policies/*.yaml
                           │
                     .cac/audit.jsonl
 ```
+
+## PR webhook integration
+
+Run the webhook server to scan pull requests automatically:
+
+```bash
+cp .env.example .env   # set CAC_WEBHOOK_SECRET, tokens
+cac serve --policies policies
+```
+
+On each `pull_request` event (opened, synchronized, reopened):
+
+1. **Detector** clones the PR head and scans against policies
+2. Posts **commit status** (`compliance-as-code/scan`) — pass or fail
+3. Posts a **PR comment** with violation details
+4. Optionally opens an **auto-fix PR** when `CAC_AUTO_FIX_PR=true`
+
+See [docs/WEBHOOK_SETUP.md](docs/WEBHOOK_SETUP.md) for GitHub and Codeberg webhook configuration.
 
 ## CI integration
 

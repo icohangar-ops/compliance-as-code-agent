@@ -4,6 +4,7 @@ members = [
     "crates/cac-scanner",
     "crates/cac-fixer",
     "crates/cac-validator",
+    "crates/cac-webhook",
     "crates/cac-cli",
 ]
 resolver = "2"
@@ -21,16 +22,24 @@ cac-core = { path = "crates/cac-core" }
 cac-scanner = { path = "crates/cac-scanner" }
 cac-fixer = { path = "crates/cac-fixer" }
 cac-validator = { path = "crates/cac-validator" }
+cac-webhook = { path = "crates/cac-webhook" }
 anyhow = "1.0"
+axum = { version = "0.8", features = ["json"] }
 chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4.5", features = ["derive", "env"] }
 glob = "0.3"
 hex = "0.4"
 hmac = "0.12"
 regex = "1.11"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
 sha2 = "0.10"
+tempfile = "3.24"
 thiserror = "2.0"
+tokio = { version = "1.49", features = ["macros", "rt-multi-thread", "signal"] }
+tower-http = { version = "0.6", features = ["trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 walkdir = "2.5"

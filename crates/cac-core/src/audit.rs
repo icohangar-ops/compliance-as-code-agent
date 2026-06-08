@@ -16,6 +16,7 @@ pub enum AuditPhase {
     Fix,
     Validate,
     Scan,
+    Webhook,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

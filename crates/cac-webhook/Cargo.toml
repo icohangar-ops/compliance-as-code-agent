@@ -1,0 +1,28 @@
+[package]
+name = "cac-webhook"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "PR webhook server for GitHub and Codeberg/Gitea compliance scans"
+
+[dependencies]
+cac-core = { workspace = true }
+cac-fixer = { workspace = true }
+cac-scanner = { workspace = true }
+cac-validator = { workspace = true }
+axum = { workspace = true }
+chrono = { workspace = true }
+hex = { workspace = true }
+hmac = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+subtle = "2.6"
+tempfile = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tower-http = { workspace = true }
+tracing = { workspace = true }
