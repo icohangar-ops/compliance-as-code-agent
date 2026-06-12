@@ -1,0 +1,4 @@
+.env
+*.env.local
+bd-coach-infra/compose/traefik/letsencrypt/acme.json
+.venv/

@@ -1,0 +1,56 @@
+{
+  "name": "F6 — Commission Accrual",
+  "active": true,
+  "settings": { "executionOrder": "v1" },
+  "nodes": [
+    {
+      "id": "trigger",
+      "name": "Cron month-end +2 days",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "parameters": {
+        "rule": { "interval": [{ "field": "months", "triggerAtDayOfMonth": 2, "triggerAtHour": 9 }] }
+      },
+      "position": [200, 300]
+    },
+    {
+      "id": "commission",
+      "name": "Baserow — commission table",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "GET",
+        "url": "=https://data.{{$env.BD_COACH_DOMAIN}}/api/database/rows/table/commission/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Authorization", "value": "=Token {{$env.BASEROW_TOKEN}}" }]
+        }
+      },
+      "position": [400, 300]
+    },
+    {
+      "id": "calc",
+      "name": "Mirror commission math",
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "jsCode": "// Replicate points_engine + tier formulas from bd-coach-config\nreturn $input.all().map(i => ({ json: { ...i.json, accrual: i.json.base * i.json.rate } }));"
+      },
+      "position": [600, 300]
+    },
+    {
+      "id": "smtp",
+      "name": "SMTP personal statement",
+      "type": "n8n-nodes-base.emailSend",
+      "parameters": {
+        "fromEmail": "={{$env.SMTP_FROM}}",
+        "toEmail": "={{$json.owner_email}}",
+        "subject": "Commission accrual statement",
+        "text": "=Your accrual this period: {{$json.accrual}}"
+      },
+      "position": [800, 300]
+    }
+  ],
+  "connections": {
+    "Cron month-end +2 days": { "main": [[{ "node": "Baserow — commission table", "type": "main", "index": 0 }]] },
+    "Baserow — commission table": { "main": [[{ "node": "Mirror commission math", "type": "main", "index": 0 }]] },
+    "Mirror commission math": { "main": [[{ "node": "SMTP personal statement", "type": "main", "index": 0 }]] }
+  }
+}

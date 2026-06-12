@@ -1,0 +1,19 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint YAML
+        uses: ibiqlik/action-yamllint@v3
+      - name: DLP rules test
+        run: |
+          pip install pyyaml
+          python dlp/run_tests.py
