@@ -1,6 +1,8 @@
 use crate::payload::ProviderKind;
 use reqwest::Client;
+use resilient_call::{retry, with_timeout, RetryPolicy};
 use serde::Serialize;
+use std::time::Duration;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -11,6 +13,8 @@ pub enum ProviderError {
     Api { status: u16, body: String },
     #[error("missing token for {0}")]
     MissingToken(&'static str),
+    #[error("serialization error: {0}")]
+    Json(#[from] serde_json::Error),
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -30,8 +34,13 @@ pub struct ProviderClient {
 
 impl ProviderClient {
     pub fn new(github_token: Option<String>, codeberg_token: Option<String>) -> Self {
+        let http = Client::builder()
+            .connect_timeout(Duration::from_secs(5))
+            .timeout(Duration::from_secs(30))
+            .build()
+            .unwrap_or_else(|_| Client::new());
         Self {
-            http: Client::new(),
+            http,
             github_token,
             codeberg_token,
         }
@@ -246,23 +255,68 @@ impl ProviderClient {
         auth_prefix: &str,
         body: &T,
     ) -> Result<(), ProviderError> {
-        let resp = self
-            .http
-            .post(url)
-            .header("Authorization", format!("{auth_prefix} {token}"))
-            .header("Accept", "application/json")
-            .header("User-Agent", "compliance-as-code-agent")
-            .json(body)
-            .send()
-            .await?;
-        let status = resp.status();
-        if status.is_success() {
-            Ok(())
-        } else {
-            Err(ProviderError::Api {
-                status: status.as_u16(),
-                body: resp.text().await.unwrap_or_default(),
-            })
-        }
+        // Serialize once; reqwest's RequestBuilder is not re-runnable, so each
+        // retry attempt rebuilds the request from these owned values.
+        let auth = format!("{auth_prefix} {token}");
+        let payload = serde_json::to_vec(body)?;
+
+        // Up to 3 attempts with exponential backoff + full jitter, retrying only
+        // on transient transport errors and 429/5xx responses.
+        let policy = RetryPolicy::with_max_attempts(3);
+        let result = retry(
+            || {
+                let req = self
+                    .http
+                    .post(url)
+                    .header("Authorization", &auth)
+                    .header("Accept", "application/json")
+                    .header("User-Agent", "compliance-as-code-agent")
+                    .header("Content-Type", "application/json")
+                    .body(payload.clone());
+                async move {
+                    let resp = with_timeout(
+                        async { req.send().await.map_err(ProviderError::from) },
+                        Duration::from_secs(30),
+                    )
+                    .await
+                    .map_err(|e| match e.into_source() {
+                        Some(err) => err,
+                        None => ProviderError::Api {
+                            status: 0,
+                            body: "request timed out".into(),
+                        },
+                    })?;
+                    let status = resp.status();
+                    if status.is_success() {
+                        Ok(())
+                    } else {
+                        Err(ProviderError::Api {
+                            status: status.as_u16(),
+                            body: resp.text().await.unwrap_or_default(),
+                        })
+                    }
+                }
+            },
+            &policy,
+            is_retryable,
+        )
+        .await;
+
+        result.map_err(|e| e.into_source().unwrap_or(ProviderError::Api {
+            status: 0,
+            body: "request timed out".into(),
+        }))
+    }
+}
+
+/// Transient failures worth retrying: network/transport errors and rate-limit
+/// (429) or server (5xx) responses. Client errors (4xx other than 429) are
+/// terminal.
+fn is_retryable(err: &ProviderError) -> bool {
+    match err {
+        ProviderError::Http(_) => true,
+        ProviderError::Api { status, .. } => *status == 429 || (500..600).contains(status),
+        ProviderError::MissingToken(_) => false,
+        ProviderError::Json(_) => false,
     }
 }
