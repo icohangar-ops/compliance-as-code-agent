@@ -71,7 +71,47 @@ Open http://localhost:5173
 | `/api/benchmarks` | GET | Industry benchmarks + FinOps principles |
 | `/api/roi-scenario` | POST | Interactive ROI modeler |
 | `/api/cost-estimate` | POST | Real-time tokencost pricing |
-| `/api/usage-events` | POST | Record instrumented usage events |
+| `/api/usage-events` | POST | Record instrumented usage events (prompt/completion text) |
+| `/api/usage-ingest` | POST | **Canonical harness usage** — provider usage objects with cache buckets |
+| `/api/sessions/{session_id}/cost` | GET | Per-session, per-model cost totals |
+
+## Canonical usage ingest (harness accounting)
+
+Implements [Cost & Token-Usage Accounting](https://kenhuangus.substack.com/p/chapter-1-cost-and-token-usage-accounting): normalize provider usage → tier pricing (input, output, cache read/write) → session totals.
+
+```bash
+curl -X POST http://localhost:8000/api/usage-ingest \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "session_id": "workflow-uuid-here",
+    "source": "operational-intelligence",
+    "workflow_id": 9,
+    "agent_id": "research-agent",
+    "model": "mock-llm",
+    "provider": "canonical",
+    "usage": {
+      "input_tokens": 1200,
+      "output_tokens": 400,
+      "cache_read_input_tokens": 0,
+      "cache_creation_input_tokens": 0
+    }
+  }'
+
+curl http://localhost:8000/api/sessions/workflow-uuid-here/cost
+```
+
+**First producer:** [operational-intelligence](https://github.com/Cubiczan/operational-intelligence) — set `OI_TECH_ECONOMIST_URL` and `OI_TECH_ECONOMIST_WORKFLOW_ID` (see **Operational Intelligence Crew** workflow id on startup).
+
+### Integration test
+
+With `operational-intelligence` checked out at `~/Projects/operational-intelligence`:
+
+```bash
+chmod +x tech-economist/scripts/test_oi_integration.sh
+./tech-economist/scripts/test_oi_integration.sh
+```
+
+Expect `call_count: 4`, four agents in `by_agent`, and `total_cost_usd > 0`.
 
 ## Recording Usage Events
 
@@ -98,6 +138,7 @@ SQLite database at `backend/data/tech_economist.db`:
 
 - `workflows` — instrumented AI workflows with benchmark references
 - `usage_events` — per-run token costs, success labels, revenue attribution
+- `usage_ingest_records` — harness-level canonical usage (session, agent, cache buckets)
 - `monthly_snapshots` — aggregated longitudinal metrics
 - `enterprise_config` — EPS, shares, tech portfolio for shareholder modeling
 

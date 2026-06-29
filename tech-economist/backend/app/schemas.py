@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any
 
 from pydantic import BaseModel, Field
 
@@ -184,3 +184,49 @@ class RoiScenarioResponse(BaseModel):
     payback_months: Optional[float]
     cost_per_successful_task_usd: float
     recommendation: str
+
+
+class UsageIngestRequest(BaseModel):
+    session_id: str = Field(..., min_length=1, max_length=64)
+    source: str = Field(..., min_length=1, max_length=80)
+    model: str
+    provider: str = "canonical"
+    usage: Dict[str, Any]
+    workflow_id: Optional[int] = None
+    agent_id: Optional[str] = None
+    tool_call_id: Optional[str] = None
+
+
+class UsageIngestResponse(BaseModel):
+    id: int
+    session_id: str
+    source: str
+    model: str
+    provider: str
+    total_cost_usd: float
+    cost_breakdown: Dict[str, Any]
+    recorded_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class SessionModelUsage(BaseModel):
+    input_tokens: int
+    output_tokens: int
+    cache_read_input_tokens: int
+    cache_creation_input_tokens: int
+    cost_usd: float
+    calls: int
+
+
+class SessionCostSummary(BaseModel):
+    session_id: str
+    source: Optional[str] = None
+    workflow_id: Optional[int] = None
+    call_count: int
+    total_cost_usd: float
+    total_tokens: int
+    by_model: Dict[str, SessionModelUsage]
+    by_agent: Dict[str, float]
+    first_recorded_at: Optional[str] = None
+    last_recorded_at: Optional[str] = None

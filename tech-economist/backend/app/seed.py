@@ -119,5 +119,26 @@ def seed_database() -> None:
         db.close()
 
 
+def ensure_platform_workflows(db: Session) -> None:
+    """Idempotent workflows for Cubiczan stack producers."""
+    if db.query(Workflow).filter(Workflow.name == "Operational Intelligence Crew").first():
+        return
+    wf = Workflow(
+        name="Operational Intelligence Crew",
+        category="Platform",
+        department="Engineering",
+        default_model="gpt-4o-mini",
+        manual_baseline_cost_usd=12.0,
+        expected_value_per_success_usd=45.0,
+        benchmark_roi_median=6.0,
+        benchmark_cost_per_task_usd=2.5,
+        is_strategic=True,
+        description="oi crew + hiring — reports canonical usage to /api/usage-ingest",
+    )
+    db.add(wf)
+    db.commit()
+    print(f"Added platform workflow: Operational Intelligence Crew (id={wf.id})")
+
+
 if __name__ == "__main__":
     seed_database()

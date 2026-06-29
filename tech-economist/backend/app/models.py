@@ -77,3 +77,30 @@ class MonthlySnapshot(Base):
     portfolio_roi: Mapped[float] = mapped_column(Float, default=0.0)
     token_volume_millions: Mapped[float] = mapped_column(Float, default=0.0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class UsageIngestRecord(Base):
+    """Harness-level canonical usage (Ken Huang Cost & Token-Usage Accounting)."""
+
+    __tablename__ = "usage_ingest_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    session_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    source: Mapped[str] = mapped_column(String(80), nullable=False)
+    workflow_id: Mapped[Optional[int]] = mapped_column(ForeignKey("workflows.id"), nullable=True)
+    agent_id: Mapped[Optional[str]] = mapped_column(String(120))
+    tool_call_id: Mapped[Optional[str]] = mapped_column(String(120))
+    model: Mapped[str] = mapped_column(String(120), nullable=False)
+    provider: Mapped[str] = mapped_column(String(40), default="canonical")
+    input_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    output_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    cache_read_input_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    cache_creation_input_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    web_search_requests: Mapped[int] = mapped_column(Integer, default=0)
+    input_cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    output_cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    cache_read_cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    cache_write_cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    web_search_cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    total_cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

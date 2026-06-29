@@ -13,8 +13,11 @@ from app.schemas import (
     MonthlyTrend,
     RoiScenarioRequest,
     RoiScenarioResponse,
+    SessionCostSummary,
     UsageEventCreate,
     UsageEventOut,
+    UsageIngestRequest,
+    UsageIngestResponse,
     WorkflowCreate,
     WorkflowEconomics,
     WorkflowOut,
@@ -29,6 +32,7 @@ from app.services.analytics import (
 )
 from app.services.benchmarks import get_benchmarks, get_finops_principles, get_market_signals
 from app.services.tokencost_service import estimate_cost
+from app.services.usage_ingest import ingest_usage, session_cost_summary
 
 router = APIRouter()
 
@@ -116,6 +120,42 @@ def record_usage_event(payload: UsageEventCreate, db: Session = Depends(get_db))
     out.workflow_name = wf.name
     out.roi_multiple = round(event.revenue_lift_usd / event.total_cost_usd, 2) if event.total_cost_usd and event.successful else None
     return out
+
+
+@router.post("/usage-ingest", response_model=UsageIngestResponse)
+def usage_ingest(payload: UsageIngestRequest, db: Session = Depends(get_db)):
+    if payload.workflow_id is not None:
+        wf = db.query(Workflow).filter(Workflow.id == payload.workflow_id).first()
+        if not wf:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+
+    record, priced = ingest_usage(
+        db,
+        session_id=payload.session_id,
+        source=payload.source,
+        model=payload.model,
+        provider=payload.provider,
+        usage=payload.usage,
+        workflow_id=payload.workflow_id,
+        agent_id=payload.agent_id,
+        tool_call_id=payload.tool_call_id,
+    )
+    return UsageIngestResponse(
+        id=record.id,
+        session_id=record.session_id,
+        source=record.source,
+        model=record.model,
+        provider=record.provider,
+        total_cost_usd=record.total_cost_usd,
+        cost_breakdown=priced.to_dict(),
+        recorded_at=record.recorded_at,
+    )
+
+
+@router.get("/sessions/{session_id}/cost", response_model=SessionCostSummary)
+def session_cost(session_id: str, db: Session = Depends(get_db)):
+    summary = session_cost_summary(db, session_id)
+    return SessionCostSummary(**summary)
 
 
 @router.get("/trends", response_model=list[MonthlyTrend])
