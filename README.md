@@ -1,8 +1,10 @@
 # Compliance-as-Code Agent
 
+> **Cubiczan stack** — [Profile](https://github.com/Cubiczan) · [CHP](https://github.com/Cubiczan/consensus-hardening-protocol) · **You are here:** `compliance-as-code-agent`
+
 Rust agent that scans codebases against organizational compliance policies and auto-fixes violations.
 
-Built by [Cubiczan](https://codeberg.org/cubiczan) — composes patterns from [Consensus Hardening Protocol](https://codeberg.org/cubiczan/consensus-hardening-protocol) and [ABOS governance-core](https://codeberg.org/cubiczan/autonomous-business-os).
+Built by [Cubiczan](https://github.com/Cubiczan) — composes patterns from [Consensus Hardening Protocol](https://github.com/Cubiczan/consensus-hardening-protocol) and [autonomous-business-os](https://github.com/Cubiczan/autonomous-business-os).
 
 ## What it does
 
@@ -100,6 +102,15 @@ Exit code `1` when critical violations remain after validation.
 - Static policy engine runs fully offline — no LLM required for detection
 - Single binary (`cac`) suitable for on-prem CI and air-gapped environments
 - Signed audit ledger provides SOC2 evidence chain
+
+---
+
+## Cubiczan stack
+
+| Governance | [consensus-hardening-protocol](https://github.com/Cubiczan/consensus-hardening-protocol) · [agent-conductor](https://github.com/Cubiczan/agent-conductor) · **compliance-as-code-agent** · [cleanmandate](https://github.com/Cubiczan/cleanmandate) |
+| Finance | [Strata](https://github.com/Cubiczan/Strata) · [meshcfo](https://github.com/Cubiczan/meshcfo) · [Metabocommand](https://github.com/Cubiczan/Metabocommand) |
+
+YAML policy packs here gate [cleanmandate](https://github.com/Cubiczan/cleanmandate) spend rules and PR webhooks for [software-factory](https://github.com/Cubiczan/software-factory) output.
 
 ## License
 
